@@ -13,6 +13,7 @@ import model.TimeAllowance;
 public class Scheduler {
 
     public static final int GPU_COUNT = 4;
+    public static final String ADMIN_USERNAME = "admin";
     private static final DateTimeFormatter FORMAT = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm");
 
     private GPU[] gpus;
@@ -102,6 +103,56 @@ public class Scheduler {
         jobs.add(job);
         dispatch();
         return job;
+    }
+
+    public void advanceMinute() {
+        if (startTime == null) {
+            throw new IllegalStateException("Set the simulation date and time first");
+        }
+        now++;
+        for (GPU gpu : gpus) {
+            if (!gpu.isFree()) {
+                Job job = gpu.getCurrentJob();
+                if (now - job.getStartTime() >= job.getEstimatedDuration()) {
+                    if (job.complete(now)) {
+                        settle(job);
+                    }
+                    gpu.release();
+                }
+            }
+        }
+        dispatch();
+    }
+
+    public void cancelJob(Job job, String byUser, String reason) {
+        if (job == null) {
+            throw new IllegalArgumentException("Choose a job to cancel");
+        }
+        if (isBlank(reason)) {
+            throw new IllegalArgumentException("A reason is required to cancel a job");
+        }
+        if (byUser == null || (!byUser.equals(ADMIN_USERNAME) && !byUser.equals(job.getStudentId()))) {
+            throw new IllegalArgumentException("You can only cancel your own jobs");
+        }
+        boolean wasRunning = job.getStatus() == JobStatus.RUNNING;
+        int gpuId = job.getAssignedGpuId();
+        if (!job.cancel(now, byUser, reason.trim())) {
+            throw new IllegalArgumentException("Only queued or running jobs can be cancelled");
+        }
+        settle(job);
+        if (wasRunning) {
+            gpus[gpuId - 1].release();
+        }
+        dispatch();
+    }
+
+    private void settle(Job job) {
+        Student owner = accounts.findStudent(job.getStudentId());
+        if (owner != null) {
+            TimeAllowance allowance = owner.getAllowance();
+            allowance.release(job.getEstimatedDuration());
+            allowance.charge(job.getChargedMinutes());
+        }
     }
 
     private void dispatch() {
