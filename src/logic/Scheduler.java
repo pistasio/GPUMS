@@ -6,11 +6,12 @@ import java.util.ArrayList;
 import model.GPU;
 import model.Job;
 import model.JobStatus;
+import model.Storable;
 import model.Student;
 import model.TaskSize;
 import model.TimeAllowance;
 
-public class Scheduler {
+public class Scheduler implements Storable {
 
     public static final int GPU_COUNT = 4;
     public static final String ADMIN_USERNAME = "admin";
@@ -189,8 +190,80 @@ public class Scheduler {
         return queue;
     }
 
+    public int getQueuePosition(Job job) {
+        return getQueuedJobs().indexOf(job) + 1;
+    }
+
+    private int[] predictStarts(ArrayList<Job> queue) {
+        int[] available = new int[GPU_COUNT];
+        for (int i = 0; i < GPU_COUNT; i++) {
+            if (gpus[i].isFree()) {
+                available[i] = now;
+            } else {
+                available[i] = gpus[i].getExpectedFinish();
+            }
+        }
+        int[] starts = new int[queue.size()];
+        for (int k = 0; k < queue.size(); k++) {
+            int best = 0;
+            for (int i = 1; i < GPU_COUNT; i++) {
+                if (available[i] < available[best]) {
+                    best = i;
+                }
+            }
+            starts[k] = available[best];
+            available[best] = available[best] + queue.get(k).getEstimatedDuration();
+        }
+        return starts;
+    }
+
+    public int getPredictedStartMinute(Job job) {
+        if (job.getStatus() == JobStatus.QUEUED) {
+            ArrayList<Job> queue = getQueuedJobs();
+            return predictStarts(queue)[queue.indexOf(job)];
+        }
+        return job.getStartTime();
+    }
+
+    public int getPredictedFinishMinute(Job job) {
+        if (job.getStatus() == JobStatus.QUEUED) {
+            return getPredictedStartMinute(job) + job.getEstimatedDuration();
+        }
+        if (job.getStatus() == JobStatus.RUNNING) {
+            return job.getStartTime() + job.getEstimatedDuration();
+        }
+        return job.getFinishTime();
+    }
+
+    public LocalDateTime getPredictedStart(Job job) {
+        return toDateTime(getPredictedStartMinute(job));
+    }
+
+    public LocalDateTime getPredictedFinish(Job job) {
+        return toDateTime(getPredictedFinishMinute(job));
+    }
+
+    public String getPredictedStartText(Job job) {
+        return formatTime(getPredictedStartMinute(job));
+    }
+
+    public String getPredictedFinishText(Job job) {
+        return formatTime(getPredictedFinishMinute(job));
+    }
+
+    public int getRemainingWait(Job job) {
+        if (job.getStatus() != JobStatus.QUEUED) {
+            return 0;
+        }
+        return getPredictedStartMinute(job) - now;
+    }
+
     public GPU[] getGpus() {
         return gpus;
+    }
+
+    public String getExpectedFinishText(GPU gpu) {
+        return formatTime(gpu.getExpectedFinish());
     }
 
     public int getBusyGpuCount() {
@@ -252,6 +325,56 @@ public class Scheduler {
 
     public int countJobs(JobStatus status) {
         return getJobsWithStatus(status).size();
+    }
+
+    public int getBusyMinutes() {
+        int total = 0;
+        for (Job job : jobs) {
+            total = total + job.getRuntime(now);
+        }
+        return total;
+    }
+
+    public String getUtilizationText() {
+        if (now == 0) {
+            return "N/A";
+        }
+        double percent = getBusyMinutes() * 100.0 / (GPU_COUNT * now);
+        return Math.round(percent * 10) / 10.0 + "%";
+    }
+
+    public String toFileLine() {
+        String start = "NOT_SET";
+        if (startTime != null) {
+            start = startTime.format(FORMAT);
+        }
+        return start + "|" + now + "|" + nextJobNumber;
+    }
+
+    public void restore(String clockLine, ArrayList<Job> savedJobs) {
+        String[] parts = clockLine.split("\\|", -1);
+        if (parts.length != 3) {
+            throw new IllegalArgumentException("Damaged clock record: " + clockLine);
+        }
+        if (parts[0].equals("NOT_SET")) {
+            startTime = null;
+        } else {
+            startTime = LocalDateTime.parse(parts[0], FORMAT);
+        }
+        now = Integer.parseInt(parts[1]);
+        nextJobNumber = Integer.parseInt(parts[2]);
+        jobs = new ArrayList<Job>(savedJobs);
+        for (GPU gpu : gpus) {
+            gpu.release();
+        }
+        for (Job job : jobs) {
+            if (job.getStatus() == JobStatus.RUNNING) {
+                gpus[job.getAssignedGpuId() - 1].assign(job);
+            }
+            if (job.getJobNumber() >= nextJobNumber) {
+                nextJobNumber = job.getJobNumber() + 1;
+            }
+        }
     }
 
     private boolean isBlank(String text) {
