@@ -24,6 +24,28 @@ public class TimeAllowance {
         this.usedMinutes = 0;
         this.reservedMinutes = 0;
     }
+    
+    public TimeAllowance(int totalMinutes,
+            int usedMinutes,
+            int reservedMinutes) {
+				
+				if (totalMinutes < 0 || usedMinutes < 0
+				   || reservedMinutes < 0) {
+				throw new IllegalArgumentException(
+				   "GPU minutes cannot be negative"
+				);
+			}
+				
+			if ((long) usedMinutes + reservedMinutes > totalMinutes) {
+				throw new IllegalArgumentException(
+				   "Used and reserved minutes exceed total allowance"
+				);
+				}
+				
+				this.totalMinutes = totalMinutes;
+				this.usedMinutes = usedMinutes;
+				this.reservedMinutes = reservedMinutes;
+}
 
     public int getTotalMinutes() {
         return totalMinutes;
@@ -100,4 +122,8 @@ public class TimeAllowance {
                 ", available=" + getAvailable() +
                 '}';
     }
+    
+
+	
+
 }

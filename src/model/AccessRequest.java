@@ -15,7 +15,7 @@ public class AccessRequest {
     private static int nextId = 1;
 
     // Attributes
-    private final int requestId;
+    private int requestId;
     private final String username;
     private final String requestType;
     private String status;
@@ -66,6 +66,42 @@ public class AccessRequest {
         this.requestedMinutes = requestedMinutes;
         this.reason = reason == null ? "" : reason.trim();
     }
+    
+
+public AccessRequest(int requestId, String username,
+                     String requestType, String status,
+                     int requestedMinutes, String reason) {
+
+    // Reuse the original constructor's validation
+    this(username, requestType, requestedMinutes, reason);
+
+    if (requestId == Integer.MAX_VALUE) {
+        throw new IllegalArgumentException(
+            "Request ID exceeds supported limit"
+        );
+    }
+
+    if (requestId >= nextId) {
+        nextId = requestId + 1;
+    }
+
+    if (!PENDING.equals(status)
+            && !APPROVED.equals(status)
+            && !REJECTED.equals(status)) {
+        throw new IllegalArgumentException(
+            "Invalid request status"
+        );
+    }
+
+    this.requestId = requestId;
+    this.status = status;
+
+    // Prevent future duplicate request IDs
+    if (requestId >= nextId) {
+        nextId = requestId + 1;
+    }
+}
+
 
     // Getters
     public int getRequestId() {

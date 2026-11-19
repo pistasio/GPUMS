@@ -18,7 +18,7 @@ public class AccountManager {
         requests = new ArrayList<AccessRequest>();
     }
 
-    // Find any user by username
+    // Find any user by usernam
     public User findUser(String username) {
         if (username == null) {
             return null;
@@ -52,6 +52,8 @@ public class AccountManager {
                 "Username already exists"
             );
         }
+       
+       
 
         Student student = new Student(username, password, fullName);
 
@@ -67,6 +69,44 @@ public class AccountManager {
         requests.add(request);
         return student;
     }
+    
+
+public Student registerStudent(String username,
+                               String password,
+                               String fullName,
+                               String email,
+                               String phoneNumber) {
+
+    // Prevent duplicate university IDs
+    if (findUser(username) != null) {
+        throw new IllegalArgumentException(
+            "A student with this university ID already exists"
+        );
+    }
+
+    // Create student with all required details
+    Student student = new Student(
+        username,
+        password,
+        fullName,
+        email,
+        phoneNumber
+    );
+
+    // Create a registration request
+    AccessRequest request = new AccessRequest(
+        username,
+        AccessRequest.REGISTRATION,
+        0,
+        "New student registration"
+    );
+
+    users.add(student);
+    requests.add(request);
+
+    return student;
+}
+
 
     // Add an administrator
     public void addAdministrator(Administrator admin) {
@@ -242,4 +282,42 @@ public class AccountManager {
 
         return pending;
     }
+    
+
+    // Restore an existing user from saved data
+    public void restoreUser(User user) {
+
+        if (user == null) {
+            throw new IllegalArgumentException(
+                "User cannot be null"
+            );
+        }
+
+        if (findUser(user.getUsername()) != null) {
+            throw new IllegalArgumentException(
+                "Duplicate username in saved data"
+            );
+        }
+
+        users.add(user);
+    }
+
+    // Restore an existing access request
+    public void restoreRequest(AccessRequest request) {
+
+        if (request == null) {
+            throw new IllegalArgumentException(
+                "Request cannot be null"
+            );
+        }
+
+        if (findRequest(request.getRequestId()) != null) {
+            throw new IllegalArgumentException(
+                "Duplicate request ID in saved data"
+            );
+        }
+
+        requests.add(request);
+    }
+
 }

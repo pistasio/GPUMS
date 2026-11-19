@@ -6,6 +6,15 @@ public class Administrator extends User {
     public Administrator(String username, String password, String fullName) {
         super(username, password, fullName);
     }
+    
+
+public Administrator(String username, String password,
+                     String fullName, String email,
+                     String phoneNumber) {
+
+    super(username, password, fullName, email, phoneNumber);
+}
+
 
     @Override
     public String getRole() {
