@@ -39,6 +39,9 @@ public class DataStore {
             writer.println(line);
         }
         writer.close();
+        if (writer.checkError()) {
+            throw new IOException("Could not finish saving data.");
+        }
     }
 
     public static AccountManager loadAccounts() throws IOException {
@@ -92,6 +95,9 @@ public class DataStore {
                     + "|" + request.getStatus() + "|" + request.getRequestedMinutes() + "|" + request.getReason());
         }
         writer.close();
+        if (writer.checkError()) {
+            throw new IOException("Could not finish saving data.");
+        }
     }
 
     public static void loadRequests(AccountManager manager) throws IOException {
@@ -124,11 +130,17 @@ public class DataStore {
         PrintWriter clockWriter = new PrintWriter(CLOCK_FILE);
         clockWriter.println(scheduler.toFileLine());
         clockWriter.close();
+        if (clockWriter.checkError()) {
+            throw new IOException("Could not save the simulation clock.");
+        }
         PrintWriter jobWriter = new PrintWriter(JOBS_FILE);
         for (Job job : scheduler.getAllJobs()) {
             jobWriter.println(job.toFileLine());
         }
         jobWriter.close();
+        if (jobWriter.checkError()) {
+            throw new IOException("Could not save the jobs.");
+        }
     }
 
     public static void loadScheduler(Scheduler scheduler) throws IOException {
