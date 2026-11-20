@@ -33,6 +33,14 @@ public abstract class User {
             );
         }
 
+        if (username.contains("|") || password.contains("|")
+                || fullName.contains("|") || email.contains("|")
+                || phoneNumber.contains("|")) {
+            throw new IllegalArgumentException(
+                "Account details cannot contain |"
+            );
+        }
+
         this.username = username.trim();
         this.password = password;
         this.fullName = fullName.trim();
@@ -54,6 +62,10 @@ public abstract class User {
 
     public String getPhoneNumber() {
         return phoneNumber;
+    }
+
+    public String getPassword() {
+        return password;
     }
 
     public boolean checkPassword(String enteredPassword) {

@@ -32,6 +32,13 @@ public class AccessRequest {
             );
         }
 
+        if (username.contains("|")
+                || (reason != null && reason.contains("|"))) {
+            throw new IllegalArgumentException(
+                "Request details cannot contain |"
+            );
+        }
+
         if (!REGISTRATION.equals(requestType)
                 && !EXTRA_TIME.equals(requestType)) {
             throw new IllegalArgumentException(

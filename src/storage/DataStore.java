@@ -39,6 +39,7 @@ public class DataStore {
 
                     writer.println(
                         student.getUsername() + "|" +
+                        student.getPassword() + "|" +
                         student.getFullName() + "|" +
                         student.getEmail() + "|" +
                         student.getPhoneNumber() + "|" +
@@ -53,6 +54,7 @@ public class DataStore {
 
                     writer.println(
                         user.getUsername() + "|" +
+                        user.getPassword() + "|" +
                         user.getFullName() + "|" +
                         user.getEmail() + "|" +
                         user.getPhoneNumber() + "|" +
@@ -71,15 +73,7 @@ public class DataStore {
     }
 
     // Load saved accounts
-    // Passwords must be supplied separately.
-    public static AccountManager loadAccounts(
-            ArrayList<String> credentials) throws IOException {
-
-        if (credentials == null) {
-            throw new IllegalArgumentException(
-                "Credentials cannot be null"
-            );
-        }
+    public static AccountManager loadAccounts() throws IOException {
 
         AccountManager manager = new AccountManager();
 
@@ -90,68 +84,54 @@ public class DataStore {
 
                 String[] data = line.split("\\|", -1);
 
-                if (data.length != 9 && data.length != 5) {
+                if (data.length != 10 && data.length != 6) {
                     throw new IOException("Invalid account record");
                 }
 
                 String username = data[0];
-                String fullName = data[1];
-                String email = data[2];
-                String phone = data[3];
-                String role = data[4];
+                String password = data[1];
+                String fullName = data[2];
+                String email = data[3];
+                String phone = data[4];
+                String role = data[5];
 
-                String password = null;
+                if (role.equals("STUDENT") && data.length == 10) {
 
-                for (String entry : credentials) {
-                    if (entry == null) {
-                        continue;
-                    }
-
-                    String[] parts = entry.split("\\|", 2);
-
-                    if (parts.length == 2 &&
-                            parts[0].equalsIgnoreCase(username)) {
-                        password = parts[1];
-                        break;
-                    }
-                }
-
-                if (password == null || password.isEmpty()) {
-                    throw new IOException(
-                        "Missing password for " + username
-                    );
-                }
-
-                if (role.equals("STUDENT") && data.length == 9) {
-
-                    if (!data[5].equals("true")
-                            && !data[5].equals("false")) {
+                    if (!data[6].equals("true")
+                            && !data[6].equals("false")) {
                         throw new IOException("Invalid approval status");
                     }
 
-                    boolean approved = Boolean.parseBoolean(data[5]);
+                    boolean approved = Boolean.parseBoolean(data[6]);
 
-                    int total = Integer.parseInt(data[6]);
-                    int used = Integer.parseInt(data[7]);
-                    int reserved = Integer.parseInt(data[8]);
+                    int total = Integer.parseInt(data[7]);
+                    int used = Integer.parseInt(data[8]);
+                    int reserved = Integer.parseInt(data[9]);
 
                     TimeAllowance allowance =
                         new TimeAllowance(total, used, reserved);
 
-                    Student student = new Student(
-                        username, password, fullName,
-                        approved, allowance
-                    );
+                    Student student;
 
-                    // Restored student must also retain
-                    // email and phone. See note below.
+                    if (email.isEmpty() && phone.isEmpty()) {
+                        student = new Student(
+                            username, password, fullName,
+                            approved, allowance
+                        );
+                    } else {
+                        student = new Student(
+                            username, password, fullName,
+                            email, phone, approved, allowance
+                        );
+                    }
+
                     manager.restoreUser(student);
 
-                } else if (role.equals("ADMIN") && data.length == 5) {
+                } else if (role.equals("ADMIN") && data.length == 6) {
 
-                	Administrator admin = new Administrator(
-                		    username, password, fullName, email, phone
-                		);
+                    Administrator admin = new Administrator(
+                        username, password, fullName, email, phone
+                    );
 
                     manager.restoreUser(admin);
 
