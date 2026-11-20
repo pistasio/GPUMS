@@ -17,6 +17,7 @@ public class AdminFrame extends JFrame implements ActionListener {
     private Scheduler scheduler;
     private Administrator administrator;
     private JFrame loginFrame;
+    private DashboardPanel dashboard;
 
     private JLabel clockLabel;
     private JTextField searchField;
@@ -118,6 +119,16 @@ public class AdminFrame extends JFrame implements ActionListener {
 
         tabs.addTab("Students", studentsPanel);
 
+        dashboard = new DashboardPanel(
+                scheduler, administrator, new Runnable() {
+                    @Override
+                    public void run() {
+                        AdminFrame.this.refresh();
+                    }
+                });
+
+        tabs.addTab("Dashboard", dashboard);
+        
         content.add(tabs, BorderLayout.CENTER);
 
         JPanel bottomPanel = new JPanel();
@@ -157,6 +168,10 @@ public class AdminFrame extends JFrame implements ActionListener {
     }
 
     private void refresh() {
+        if (dashboard != null) {
+            dashboard.refresh();
+        }
+      
         if (scheduler.isClockStarted()) {
             clockLabel.setText(
                     "Simulation time: " + scheduler.getNowText());
