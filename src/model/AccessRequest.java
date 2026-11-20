@@ -1,116 +1,69 @@
-
 package model;
 
 public class AccessRequest {
 
-    // Request types
     public static final String REGISTRATION = "REGISTRATION";
     public static final String EXTRA_TIME = "EXTRA_TIME";
 
-    // Request statuses
     public static final String PENDING = "PENDING";
     public static final String APPROVED = "APPROVED";
     public static final String REJECTED = "REJECTED";
 
     private static int nextId = 1;
 
-    // Attributes
     private int requestId;
-    private final String username;
-    private final String requestType;
+    private String username;
+    private String requestType;
     private String status;
-    private final int requestedMinutes;
-    private final String reason;
+    private int requestedMinutes;
+    private String reason;
 
-    // Constructor
-    public AccessRequest(String username, String requestType,
-                         int requestedMinutes, String reason) {
-
+    public AccessRequest(String username, String requestType, int requestedMinutes, String reason) {
         if (username == null || username.trim().isEmpty()) {
-            throw new IllegalArgumentException(
-                "Username cannot be empty"
-            );
+            throw new IllegalArgumentException("Username cannot be empty");
         }
-
-        if (username.contains("|")
-                || (reason != null && reason.contains("|"))) {
-            throw new IllegalArgumentException(
-                "Request details cannot contain |"
-            );
+        if (username.contains("|") || (reason != null && reason.contains("|"))) {
+            throw new IllegalArgumentException("Request details cannot contain |");
         }
-
-        if (!REGISTRATION.equals(requestType)
-                && !EXTRA_TIME.equals(requestType)) {
-            throw new IllegalArgumentException(
-                "Invalid request type"
-            );
+        if (!REGISTRATION.equals(requestType) && !EXTRA_TIME.equals(requestType)) {
+            throw new IllegalArgumentException("Invalid request type");
         }
-
         if (EXTRA_TIME.equals(requestType)) {
             if (requestedMinutes <= 0) {
-                throw new IllegalArgumentException(
-                    "Requested minutes must be positive"
-                );
+                throw new IllegalArgumentException("Requested minutes must be positive");
             }
-
             if (reason == null || reason.trim().isEmpty()) {
-                throw new IllegalArgumentException(
-                    "A reason is required for extra time"
-                );
+                throw new IllegalArgumentException("A reason is required for extra time");
             }
-        } else {
-            if (requestedMinutes != 0) {
-                throw new IllegalArgumentException(
-                    "Registration requests cannot request minutes"
-                );
-            }
+        } else if (requestedMinutes != 0) {
+            throw new IllegalArgumentException("Registration requests cannot request minutes");
         }
-
-        this.requestId = nextId++;
+        this.requestId = nextId;
+        nextId++;
         this.username = username.trim();
         this.requestType = requestType;
         this.status = PENDING;
         this.requestedMinutes = requestedMinutes;
-        this.reason = reason == null ? "" : reason.trim();
-    }
-    
-
-public AccessRequest(int requestId, String username,
-                     String requestType, String status,
-                     int requestedMinutes, String reason) {
-
-    // Reuse the original constructor's validation
-    this(username, requestType, requestedMinutes, reason);
-
-    if (requestId == Integer.MAX_VALUE) {
-        throw new IllegalArgumentException(
-            "Request ID exceeds supported limit"
-        );
+        if (reason == null) {
+            this.reason = "";
+        } else {
+            this.reason = reason.trim();
+        }
     }
 
-    if (requestId >= nextId) {
-        nextId = requestId + 1;
+    public AccessRequest(int requestId, String username, String requestType, String status,
+            int requestedMinutes, String reason) {
+        this(username, requestType, requestedMinutes, reason);
+        if (!PENDING.equals(status) && !APPROVED.equals(status) && !REJECTED.equals(status)) {
+            throw new IllegalArgumentException("Invalid request status");
+        }
+        this.requestId = requestId;
+        this.status = status;
+        if (requestId >= nextId) {
+            nextId = requestId + 1;
+        }
     }
 
-    if (!PENDING.equals(status)
-            && !APPROVED.equals(status)
-            && !REJECTED.equals(status)) {
-        throw new IllegalArgumentException(
-            "Invalid request status"
-        );
-    }
-
-    this.requestId = requestId;
-    this.status = status;
-
-    // Prevent future duplicate request IDs
-    if (requestId >= nextId) {
-        nextId = requestId + 1;
-    }
-}
-
-
-    // Getters
     public int getRequestId() {
         return requestId;
     }
@@ -139,33 +92,23 @@ public AccessRequest(int requestId, String username,
         return PENDING.equals(status);
     }
 
-    // Approve request
     public void approve() {
         if (!isPending()) {
-            throw new IllegalStateException(
-                "Only pending requests can be approved"
-            );
+            throw new IllegalStateException("Only pending requests can be approved");
         }
-
         status = APPROVED;
     }
 
-    // Reject request
     public void reject() {
         if (!isPending()) {
-            throw new IllegalStateException(
-                "Only pending requests can be rejected"
-            );
+            throw new IllegalStateException("Only pending requests can be rejected");
         }
-
         status = REJECTED;
     }
 
     @Override
     public String toString() {
-        return "Request ID: " + requestId
-                + " | Username: " + username
-                + " | Type: " + requestType
+        return "Request ID: " + requestId + " | Username: " + username + " | Type: " + requestType
                 + " | Status: " + status;
     }
 }
