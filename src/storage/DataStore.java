@@ -144,6 +144,8 @@ public class DataStore {
             throw new IOException("Invalid account data", e);
         }
 
+        manager.addDefaultAdministrator();
+
         return manager;
     }
 

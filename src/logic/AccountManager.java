@@ -10,6 +10,9 @@ import model.AccessRequest;
 
 public class AccountManager {
 
+    public static final String ADMIN_USERNAME = "admin";
+    public static final String ADMIN_PASSWORD = "gpu2026";
+
     private ArrayList<User> users;
     private ArrayList<AccessRequest> requests;
 
@@ -107,6 +110,17 @@ public Student registerStudent(String username,
     return student;
 }
 
+
+    // Create the default administrator account if it does not exist
+    public void addDefaultAdministrator() {
+        if (findUser(ADMIN_USERNAME) == null) {
+            users.add(new Administrator(
+                ADMIN_USERNAME,
+                ADMIN_PASSWORD,
+                "System Administrator"
+            ));
+        }
+    }
 
     // Add an administrator
     public void addAdministrator(Administrator admin) {
