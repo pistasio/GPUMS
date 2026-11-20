@@ -10,6 +10,8 @@ import model.User;
 import logic.Scheduler;
 import model.Administrator;
 
+import model.Student;
+
 public class LoginFrame extends JFrame implements ActionListener {
 
     private static final long serialVersionUID = 1L;
@@ -102,15 +104,14 @@ public class LoginFrame extends JFrame implements ActionListener {
                     adminFrame.setVisible(true);
                     setVisible(false);
 
-                } else {
-                    JOptionPane.showMessageDialog(
-                            this,
-                            "Welcome, " + user.getFullName()
-                                    + "\nYour account is approved."
-                                    + "\nThe student screen will be connected next.",
-                            "Login successful",
-                            JOptionPane.INFORMATION_MESSAGE);
+                } else if (user instanceof Student) {
+                    StudentFrame studentFrame = new StudentFrame(
+                            accounts, scheduler, (Student) user, this);
+
+                    studentFrame.setVisible(true);
+                    setVisible(false);
                 }
+                
 
             } catch (IllegalArgumentException | IllegalStateException ex) {
                 passwordField.setText("");
