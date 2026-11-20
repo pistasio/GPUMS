@@ -1,5 +1,9 @@
 package ui;
 
+import java.io.File;
+import java.io.IOException;
+import storage.DataStore;
+
 import java.awt.*;
 import java.awt.event.*;
 import javax.swing.*;
@@ -29,7 +33,26 @@ public class LoginFrame extends JFrame implements ActionListener {
         this.scheduler = new Scheduler(accounts);
 
         setTitle("GPU Management - Login");
-        setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
+
+        addWindowListener(new java.awt.event.WindowAdapter() {
+            @Override
+            public void windowClosing(java.awt.event.WindowEvent e) {
+                try {
+                    DataStore.saveAccounts(accounts);
+                    DataStore.saveRequests(accounts);
+                    DataStore.saveScheduler(scheduler);
+                    System.exit(0);
+                } catch (IOException ex) {
+                    JOptionPane.showMessageDialog(
+                            LoginFrame.this,
+                            "Could not save your data:\n" + ex.getMessage()
+                                    + "\nThe application will stay open. Try closing it again.",
+                            "Save failed",
+                            JOptionPane.ERROR_MESSAGE);
+                }
+            }
+        });
 
         JPanel content = new JPanel(new BorderLayout(10, 15));
         content.setBorder(
@@ -130,11 +153,46 @@ public class LoginFrame extends JFrame implements ActionListener {
         SwingUtilities.invokeLater(new Runnable() {
             @Override
             public void run() {
-                AccountManager accounts = new AccountManager();
-                accounts.addDefaultAdministrator();
+                try {
+                    boolean anySaveFile =
+                            new File("accounts.txt").exists()
+                            || new File("requests.txt").exists()
+                            || new File("jobs.txt").exists()
+                            || new File("clock.txt").exists();
 
-                LoginFrame frame = new LoginFrame(accounts);
-                frame.setVisible(true);
+                    if (anySaveFile && !DataStore.saveFilesExist()) {
+                        throw new IOException(
+                                "Some save files are missing. All four are required:\n"
+                                + "accounts.txt, requests.txt, jobs.txt and clock.txt.");
+                    }
+
+                    AccountManager accounts;
+
+                    if (DataStore.saveFilesExist()) {
+                        accounts = DataStore.loadAccounts();
+                        DataStore.loadRequests(accounts);
+                    } else {
+                        accounts = new AccountManager();
+                        accounts.addDefaultAdministrator();
+                    }
+
+                    LoginFrame login = new LoginFrame(accounts);
+
+                    if (DataStore.saveFilesExist()) {
+                        DataStore.loadScheduler(login.scheduler);
+                    }
+
+                    login.setVisible(true);
+
+                } catch (IOException | IllegalArgumentException
+                        | IllegalStateException ex) {
+                    JOptionPane.showMessageDialog(
+                            null,
+                            "Could not load saved data:\n" + ex.getMessage()
+                                    + "\nExisting save files have not been overwritten.",
+                            "Startup failed",
+                            JOptionPane.ERROR_MESSAGE);
+                }
             }
         });
     }
