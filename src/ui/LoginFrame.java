@@ -7,11 +7,15 @@ import javax.swing.*;
 import logic.AccountManager;
 import model.User;
 
+import logic.Scheduler;
+import model.Administrator;
+
 public class LoginFrame extends JFrame implements ActionListener {
 
     private static final long serialVersionUID = 1L;
 
     private AccountManager accounts;
+    private Scheduler scheduler;
 
     private JTextField usernameField;
     private JPasswordField passwordField;
@@ -20,6 +24,7 @@ public class LoginFrame extends JFrame implements ActionListener {
 
     public LoginFrame(AccountManager accounts) {
         this.accounts = accounts;
+        this.scheduler = new Scheduler(accounts);
 
         setTitle("GPU Management - Login");
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
@@ -87,15 +92,25 @@ public class LoginFrame extends JFrame implements ActionListener {
 
             try {
                 User user = accounts.login(username, password);
-
                 passwordField.setText("");
 
-                JOptionPane.showMessageDialog(
-                        this,
-                        "Welcome, " + user.getFullName()
-                                + "\nRole: " + user.getRole(),
-                        "Login successful",
-                        JOptionPane.INFORMATION_MESSAGE);
+                if (user instanceof Administrator) {
+                    AdminFrame adminFrame = new AdminFrame(
+                            accounts, scheduler,
+                            (Administrator) user, this);
+
+                    adminFrame.setVisible(true);
+                    setVisible(false);
+
+                } else {
+                    JOptionPane.showMessageDialog(
+                            this,
+                            "Welcome, " + user.getFullName()
+                                    + "\nYour account is approved."
+                                    + "\nThe student screen will be connected next.",
+                            "Login successful",
+                            JOptionPane.INFORMATION_MESSAGE);
+                }
 
             } catch (IllegalArgumentException | IllegalStateException ex) {
                 passwordField.setText("");
@@ -108,6 +123,7 @@ public class LoginFrame extends JFrame implements ActionListener {
             }
         }
     }
+   
 
     public static void main(String[] args) {
         SwingUtilities.invokeLater(new Runnable() {
