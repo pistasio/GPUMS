@@ -223,27 +223,84 @@ public class AdminFrame extends JFrame implements ActionListener {
 
     private void processRequest(boolean approve) {
         int row = requestTable.getSelectedRow();
-
         if (row == -1) {
-            JOptionPane.showMessageDialog(
-                    this, "Select a request first.");
+            JOptionPane.showMessageDialog(this, "Select a request first.");
             return;
         }
 
         int requestId = (Integer) requestModel.getValueAt(row, 0);
-        String action = approve ? "Approve" : "Reject";
+        AccessRequest request = accounts.findRequest(requestId);
 
+        if (request == null || !request.isPending()) {
+            throw new IllegalArgumentException(
+                    "This request is no longer pending.");
+        }
+
+        Student student = accounts.findStudent(request.getUsername());
+        if (student == null) {
+            throw new IllegalArgumentException("Student account not found.");
+        }
+
+        boolean registration =
+                AccessRequest.REGISTRATION.equals(request.getRequestType());
+
+        String details =
+                "University ID: " + student.getUsername()
+                + "\nName: " + student.getFullName()
+                + "\nEmail: " + student.getEmail()
+                + "\nPhone: " + student.getPhoneNumber();
+
+        if (registration) {
+            details += "\nStudent-chosen password: " + student.getPassword();
+        }
+
+        details += "\n\nRequest type: " + request.getRequestType()
+                + "\nRequested minutes: " + request.getRequestedMinutes()
+                + "\nReason: " + request.getReason();
+
+        JTextArea information = new JTextArea(details, 12, 40);
+        information.setEditable(false);
+        information.setLineWrap(true);
+        information.setWrapStyleWord(true);
+        information.setCaretPosition(0);
+
+        JPanel panel = new JPanel(new BorderLayout(10, 10));
+        panel.add(new JScrollPane(information), BorderLayout.CENTER);
+
+        JTextField allocationField = new JTextField(
+                String.valueOf(student.getAllowance().getTotalMinutes()), 8);
+
+        if (approve && registration) {
+            JPanel allocationPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
+            allocationPanel.add(new JLabel("Initial GPU minutes:"));
+            allocationPanel.add(allocationField);
+            panel.add(allocationPanel, BorderLayout.SOUTH);
+        }
+
+        String action = approve ? "Approve" : "Reject";
         int answer = JOptionPane.showConfirmDialog(
-                this,
+                this, panel,
                 action + " request " + requestId + "?",
-                "Confirm decision",
-                JOptionPane.YES_NO_OPTION);
+                JOptionPane.YES_NO_OPTION,
+                JOptionPane.QUESTION_MESSAGE);
 
         if (answer != JOptionPane.YES_OPTION) {
             return;
         }
 
-        if (approve) {
+        if (approve && registration) {
+            int initialMinutes;
+            try {
+                initialMinutes = Integer.parseInt(
+                        allocationField.getText().trim());
+            } catch (NumberFormatException ex) {
+                throw new IllegalArgumentException(
+                        "Initial GPU minutes must be a whole number.");
+            }
+
+            accounts.approveRegistration(
+                    requestId, administrator, initialMinutes);
+        } else if (approve) {
             accounts.approveRequest(requestId, administrator);
         } else {
             accounts.rejectRequest(requestId, administrator);
