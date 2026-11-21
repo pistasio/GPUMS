@@ -30,6 +30,7 @@ public class AdminFrame extends JFrame implements ActionListener {
     private JButton approveButton;
     private JButton rejectButton;
     private JButton searchButton;
+    private JButton grantButton;
     private JButton refreshButton;
     private JButton setupButton;
     private JButton advanceButton;
@@ -117,6 +118,11 @@ public class AdminFrame extends JFrame implements ActionListener {
         studentsPanel.add(
                 new JScrollPane(studentTable), BorderLayout.CENTER);
 
+        JPanel studentButtons = new JPanel();
+        grantButton = createButton("Grant extra time");
+        studentButtons.add(grantButton);
+        studentsPanel.add(studentButtons, BorderLayout.SOUTH);
+        
         tabs.addTab("Students", studentsPanel);
 
         dashboard = new DashboardPanel(
@@ -308,6 +314,67 @@ public class AdminFrame extends JFrame implements ActionListener {
 
         refresh();
     }
+    
+    private void grantExtraTime() {
+        int row = studentTable.getSelectedRow();
+        if (row == -1) {
+            throw new IllegalArgumentException("Select a student first.");
+        }
+
+        row = studentTable.convertRowIndexToModel(row);
+        String studentId = (String) studentModel.getValueAt(row, 0);
+        Student student = accounts.findStudent(studentId);
+
+        if (student == null || !student.isApproved()) {
+            throw new IllegalArgumentException(
+                    "Extra time can only be granted to an approved student.");
+        }
+
+        JTextField minutesField = new JTextField("20");
+        JTextField reasonField = new JTextField(25);
+
+        JPanel fields = new JPanel(new GridLayout(2, 2, 10, 10));
+        fields.add(new JLabel("Additional GPU minutes:"));
+        fields.add(minutesField);
+        fields.add(new JLabel("Reason:"));
+        fields.add(reasonField);
+
+        JPanel panel = new JPanel(new BorderLayout(10, 10));
+        panel.add(new JLabel(
+                student.getFullName() + " (" + studentId + ")"),
+                BorderLayout.NORTH);
+        panel.add(fields, BorderLayout.CENTER);
+
+        int answer = JOptionPane.showConfirmDialog(
+                this, panel,
+                "Grant extra GPU time",
+                JOptionPane.OK_CANCEL_OPTION,
+                JOptionPane.QUESTION_MESSAGE);
+
+        if (answer != JOptionPane.OK_OPTION) {
+            return;
+        }
+
+        int minutes;
+        try {
+            minutes = Integer.parseInt(minutesField.getText().trim());
+        } catch (NumberFormatException ex) {
+            throw new IllegalArgumentException(
+                    "Additional minutes must be a whole number.");
+        }
+
+        accounts.grantExtraTime(
+                studentId, minutes, reasonField.getText(), administrator);
+
+        refresh();
+
+        JOptionPane.showMessageDialog(
+                this,
+                minutes + " GPU minutes granted to " + studentId
+                        + ".\nThe reason has been recorded.",
+                "Time granted",
+                JOptionPane.INFORMATION_MESSAGE);
+    }
 
     private void logout() {
         loginFrame.setVisible(true);
@@ -324,6 +391,9 @@ public class AdminFrame extends JFrame implements ActionListener {
 
             } else if (source == rejectButton) {
                 processRequest(false);
+
+            } else if (source == grantButton) {
+                grantExtraTime();
 
             } else if (source == setupButton) {
                 ClockSetupDialog dialog =
