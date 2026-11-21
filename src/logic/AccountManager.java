@@ -126,6 +126,30 @@ public class AccountManager {
         }
         request.approve();
     }
+    
+    public void approveRegistration(int requestId,
+            Administrator admin, int initialMinutes) {
+        checkAdmin(admin);
+
+        AccessRequest request = findPendingRequest(requestId);
+        if (!AccessRequest.REGISTRATION.equals(request.getRequestType())) {
+            throw new IllegalArgumentException(
+                    "Select a registration request.");
+        }
+
+        Student student = findStudent(request.getUsername());
+        if (student == null) {
+            throw new IllegalStateException("Student account not found.");
+        }
+        if (student.isApproved()) {
+            throw new IllegalStateException(
+                    "Student account is already approved.");
+        }
+
+        student.getAllowance().setTotalMinutes(initialMinutes);
+        admin.approveStudent(student);
+        request.approve();
+    }
 
     public void rejectRequest(int requestId, Administrator admin) {
         checkAdmin(admin);

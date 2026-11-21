@@ -68,6 +68,14 @@ public class TimeAllowance {
         }
         usedMinutes += minutes;
     }
+    
+    public void setTotalMinutes(int minutes) {
+        if (minutes < 0 || minutes < usedMinutes + reservedMinutes) {
+            throw new IllegalArgumentException(
+                    "Allocation cannot be negative or below used plus reserved minutes.");
+        }
+        totalMinutes = minutes;
+    }
 
     public void addMinutes(int minutes) {
         if (minutes <= 0) {
