@@ -102,6 +102,41 @@ public class AccountManager {
         requests.add(request);
         return request;
     }
+    
+    public void grantExtraTime(String studentId, int minutes,
+            String reason, Administrator admin) {
+        checkAdmin(admin);
+
+        Student student = findStudent(studentId);
+        if (student == null || !student.isApproved()) {
+            throw new IllegalArgumentException(
+                    "Select an approved student.");
+        }
+
+        if (minutes <= 0
+                || minutes > Integer.MAX_VALUE
+                        - student.getAllowance().getTotalMinutes()) {
+            throw new IllegalArgumentException(
+                    "Enter a positive number of minutes within the supported range.");
+        }
+
+        if (reason == null || reason.trim().isEmpty()
+                || reason.contains("|") || reason.contains("\n")
+                || reason.contains("\r")) {
+            throw new IllegalArgumentException(
+                    "Enter a reason without | or line breaks.");
+        }
+
+        AccessRequest request = new AccessRequest(
+                student.getUsername(),
+                AccessRequest.EXTRA_TIME,
+                minutes,
+                "Granted by " + admin.getUsername() + ": " + reason.trim());
+
+        admin.grantExtraMinutes(student, minutes);
+        request.approve();
+        requests.add(request);
+    }
 
     public AccessRequest findRequest(int requestId) {
         for (AccessRequest request : requests) {
@@ -124,6 +159,30 @@ public class AccountManager {
         } else if (request.getRequestType().equals(AccessRequest.EXTRA_TIME)) {
             admin.grantExtraMinutes(student, request.getRequestedMinutes());
         }
+        request.approve();
+    }
+    
+    public void approveRegistration(int requestId,
+            Administrator admin, int initialMinutes) {
+        checkAdmin(admin);
+
+        AccessRequest request = findPendingRequest(requestId);
+        if (!AccessRequest.REGISTRATION.equals(request.getRequestType())) {
+            throw new IllegalArgumentException(
+                    "Select a registration request.");
+        }
+
+        Student student = findStudent(request.getUsername());
+        if (student == null) {
+            throw new IllegalStateException("Student account not found.");
+        }
+        if (student.isApproved()) {
+            throw new IllegalStateException(
+                    "Student account is already approved.");
+        }
+
+        student.getAllowance().setTotalMinutes(initialMinutes);
+        admin.approveStudent(student);
         request.approve();
     }
 
