@@ -5,6 +5,7 @@ import java.awt.event.*;
 import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
 
+import logic.AccountManager;
 import logic.Scheduler;
 import model.*;
 
@@ -13,6 +14,7 @@ public class DashboardPanel extends JPanel implements ActionListener {
     private static final long serialVersionUID = 1L;
 
     private Scheduler scheduler;
+    private AccountManager accounts;
     private Administrator administrator;
     private Runnable refreshParent;
 
@@ -23,16 +25,19 @@ public class DashboardPanel extends JPanel implements ActionListener {
     private DefaultTableModel gpuModel;
     private DefaultTableModel queueModel;
     private DefaultTableModel jobModel;
+    private DefaultTableModel completedModel;
+    private DefaultTableModel balanceModel;
     private JTable jobTable;
 
     private JButton searchButton;
     private JButton detailsButton;
     private JButton cancelButton;
 
-    public DashboardPanel(Scheduler scheduler,
+    public DashboardPanel(Scheduler scheduler, AccountManager accounts,
             Administrator administrator, Runnable refreshParent) {
 
         this.scheduler = scheduler;
+        this.accounts = accounts;
         this.administrator = administrator;
         this.refreshParent = refreshParent;
 
@@ -70,15 +75,15 @@ public class DashboardPanel extends JPanel implements ActionListener {
         searchField = new JTextField(22);
         searchButton = createButton("Search");
 
-        searchPanel.add(new JLabel("Job ID, title or application:"));
+        searchPanel.add(new JLabel("Job ID, student ID, title or application:"));
         searchPanel.add(searchField);
         searchPanel.add(searchButton);
 
         jobsPanel.add(searchPanel, BorderLayout.NORTH);
 
         jobModel = createModel(new String[] {
-                "Job ID", "Student ID", "Title", "Status",
-                "GPU", "Runtime", "Queue wait", "Charged"
+                "Job ID", "Student ID", "Application", "Status", "GPU",
+                "Queue position", "Start", "Finish", "Wait (min)"
         });
 
         jobTable = new JTable(jobModel);
@@ -93,7 +98,24 @@ public class DashboardPanel extends JPanel implements ActionListener {
         buttons.add(cancelButton);
         jobsPanel.add(buttons, BorderLayout.SOUTH);
 
-        tabs.addTab("All jobs", jobsPanel);
+        tabs.addTab("Jobs", jobsPanel);
+
+        completedModel = createModel(new String[] {
+                "Job ID", "Student ID", "GPU", "Submitted", "Started",
+                "Finished", "Runtime", "Queue wait", "Charged"
+        });
+
+        tabs.addTab("Completed jobs",
+                new JScrollPane(new JTable(completedModel)));
+
+        balanceModel = createModel(new String[] {
+                "Student ID", "Name", "Allocated", "Used",
+                "Reserved", "Available"
+        });
+
+        tabs.addTab("Student balances",
+                new JScrollPane(new JTable(balanceModel)));
+
         add(tabs, BorderLayout.CENTER);
 
         refresh();
@@ -162,18 +184,68 @@ public class DashboardPanel extends JPanel implements ActionListener {
         jobModel.setRowCount(0);
 
         for (Job job : scheduler.searchJobs(null, searchField.getText())) {
+            String queuePosition = "-";
+            int wait = job.getQueueWait(scheduler.getNow());
+
+            if (job.getStatus() == JobStatus.QUEUED) {
+                queuePosition = String.valueOf(scheduler.getQueuePosition(job));
+                wait = scheduler.getRemainingWait(job);
+            }
+
             jobModel.addRow(new Object[] {
                     job.getJobId(),
                     job.getStudentId(),
-                    job.getTitle(),
+                    job.getApplicationName(),
                     job.getStatus().getName(),
                     job.getAssignedGpuId() == 0
                             ? "-" : job.getAssignedGpuId(),
+                    queuePosition,
+                    text(scheduler.getPredictedStartText(job)),
+                    text(scheduler.getPredictedFinishText(job)),
+                    wait
+            });
+        }
+
+        completedModel.setRowCount(0);
+
+        for (Job job : scheduler.getJobsWithStatus(JobStatus.COMPLETED)) {
+            completedModel.addRow(new Object[] {
+                    job.getJobId(),
+                    job.getStudentId(),
+                    job.getAssignedGpuId(),
+                    time(job.getSubmissionTime()),
+                    time(job.getStartTime()),
+                    time(job.getFinishTime()),
                     job.getRuntime(scheduler.getNow()),
                     job.getQueueWait(scheduler.getNow()),
                     job.getChargedMinutes()
             });
         }
+
+        balanceModel.setRowCount(0);
+
+        for (User user : accounts.getUsers()) {
+            if (user instanceof Student) {
+                Student student = (Student) user;
+                TimeAllowance allowance = student.getAllowance();
+
+                balanceModel.addRow(new Object[] {
+                        student.getUsername(),
+                        student.getFullName(),
+                        allowance.getTotalMinutes(),
+                        allowance.getUsedMinutes(),
+                        allowance.getReservedMinutes(),
+                        allowance.getAvailable()
+                });
+            }
+        }
+    }
+
+    private String text(String value) {
+        if (value.isEmpty()) {
+            return "-";
+        }
+        return value;
     }
 
     private Job selectedJob() {

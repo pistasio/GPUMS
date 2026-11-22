@@ -72,7 +72,6 @@ public class AdminFrame extends JFrame implements ActionListener {
 
         JTabbedPane tabs = new JTabbedPane();
 
-        // Pending registration and extra-time requests
         requestModel = createTableModel(new String[] {
                 "Request ID", "Student ID", "Type", "Minutes", "Reason"
         });
@@ -96,7 +95,6 @@ public class AdminFrame extends JFrame implements ActionListener {
         requestsPanel.add(requestButtons, BorderLayout.SOUTH);
         tabs.addTab("Pending requests", requestsPanel);
 
-        // Students and their GPU allowances
         studentModel = createTableModel(new String[] {
                 "Student ID", "Name", "Approved",
                 "Allocated", "Used", "Reserved", "Available"
@@ -126,7 +124,7 @@ public class AdminFrame extends JFrame implements ActionListener {
         tabs.addTab("Students", studentsPanel);
 
         dashboard = new DashboardPanel(
-                scheduler, administrator, new Runnable() {
+                scheduler, accounts, administrator, new Runnable() {
                     @Override
                     public void run() {
                         AdminFrame.this.refresh();
@@ -152,7 +150,7 @@ public class AdminFrame extends JFrame implements ActionListener {
         content.add(bottomPanel, BorderLayout.SOUTH);
 
         setContentPane(content);
-        setSize(950, 550);
+        setSize(1200, 600);
         setLocationRelativeTo(null);
 
         refresh();
