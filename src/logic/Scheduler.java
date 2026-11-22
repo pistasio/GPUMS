@@ -306,7 +306,8 @@ public class Scheduler implements Storable {
         for (Job job : jobs) {
             boolean owner = studentId == null || job.getStudentId().equals(studentId);
             boolean match = job.getJobId().toLowerCase().contains(key) || job.getTitle().toLowerCase().contains(key)
-                    || job.getApplicationName().toLowerCase().contains(key);
+                    || job.getApplicationName().toLowerCase().contains(key)
+                    || (studentId == null && job.getStudentId().toLowerCase().contains(key));
             if (owner && match) {
                 result.add(job);
             }
