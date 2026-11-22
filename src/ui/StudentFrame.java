@@ -73,7 +73,6 @@ public class StudentFrame extends JFrame implements ActionListener {
 
         JTabbedPane tabs = new JTabbedPane();
 
-        // Submit a new job
         JPanel submitPanel = new JPanel(new BorderLayout(10, 10));
         JPanel fields = new JPanel(new GridLayout(4, 2, 10, 10));
 
@@ -100,7 +99,6 @@ public class StudentFrame extends JFrame implements ActionListener {
 
         tabs.addTab("Submit job", submitPanel);
 
-        // View only the logged-in student's jobs
         JPanel jobsPanel = new JPanel(new BorderLayout(10, 10));
         JPanel searchPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
 
@@ -113,8 +111,9 @@ public class StudentFrame extends JFrame implements ActionListener {
         jobsPanel.add(searchPanel, BorderLayout.NORTH);
 
         jobModel = new DefaultTableModel(new String[] {
-                "Job ID", "Title", "Application", "Status",
-                "Duration", "GPU", "Queue position", "Charged"
+                "Job ID", "Title", "Application", "Status", "Duration",
+                "GPU", "Queue position", "Start", "Finish", "Wait (min)",
+                "Charged"
         }, 0) {
             @Override
             public boolean isCellEditable(int row, int column) {
@@ -149,7 +148,7 @@ public class StudentFrame extends JFrame implements ActionListener {
         content.add(bottom, BorderLayout.SOUTH);
 
         setContentPane(content);
-        setSize(1000, 550);
+        setSize(1250, 600);
         setLocationRelativeTo(null);
 
         refresh();
@@ -181,6 +180,7 @@ public class StudentFrame extends JFrame implements ActionListener {
 
             String gpu = "-";
             String position = "-";
+            int wait = job.getQueueWait(scheduler.getNow());
 
             if (job.getAssignedGpuId() != 0) {
                 gpu = String.valueOf(job.getAssignedGpuId());
@@ -188,6 +188,17 @@ public class StudentFrame extends JFrame implements ActionListener {
 
             if (job.getStatus() == JobStatus.QUEUED) {
                 position = String.valueOf(scheduler.getQueuePosition(job));
+                wait = scheduler.getRemainingWait(job);
+            }
+
+            String start = scheduler.getPredictedStartText(job);
+            String finish = scheduler.getPredictedFinishText(job);
+
+            if (start.isEmpty()) {
+                start = "-";
+            }
+            if (finish.isEmpty()) {
+                finish = "-";
             }
 
             jobModel.addRow(new Object[] {
@@ -198,6 +209,9 @@ public class StudentFrame extends JFrame implements ActionListener {
                     job.getEstimatedDuration(),
                     gpu,
                     position,
+                    start,
+                    finish,
+                    wait,
                     job.getChargedMinutes()
             });
         }
