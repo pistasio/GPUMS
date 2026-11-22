@@ -1,0 +1,9 @@
+1|100000001|REGISTRATION|APPROVED|0|New student registration
+2|100000002|REGISTRATION|APPROVED|0|New student registration
+3|100000003|REGISTRATION|APPROVED|0|New student registration
+4|100000004|REGISTRATION|APPROVED|0|New student registration
+5|100000005|REGISTRATION|APPROVED|0|New student registration
+6|100000006|REGISTRATION|PENDING|0|New student registration
+7|100000007|REGISTRATION|REJECTED|0|New student registration
+8|100000002|EXTRA_TIME|APPROVED|20|Granted by admin: Final-year project deadline
+9|100000004|EXTRA_TIME|PENDING|30|Need to rerun the thesis experiment

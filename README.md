@@ -68,6 +68,42 @@ The simulation resumes from its saved time.
 Stopping the application through Eclipse's Terminate button bypasses
 the normal save-on-close process.
 
+## Sample test data
+
+The `demo-data` folder holds a saved simulation prepared for the demonstration.
+
+To use it:
+1. Close the application.
+2. Copy the four files from `demo-data` into the project folder (the folder that contains `src`), replacing any existing save files.
+3. Run `src/ui/LoginFrame.java`.
+
+What it contains (simulation time 23/11/2026 09:40):
+- 5 approved students, 1 pending registration (100000006) and 1 rejected registration (100000007)
+- 1 approved extra-time grant (100000002, +20 minutes) and 1 pending extra-time request (100000004, 30 minutes)
+- 21 jobs: 10 completed, 4 running (all four GPUs busy), 3 queued and 4 cancelled
+  (J107 queued, cancelled by its student; J108 running, cancelled by the administrator;
+  J111 running, cancelled by its student; J120 queued, cancelled by the administrator)
+- Queued jobs J118, J119 and J121 have predicted waits of 5, 10 and 15 minutes
+
+| Account | Username | Password | Allowance |
+|---|---|---|---|
+| Administrator | admin | gpu2026 | - |
+| Aisha Al Mansoori | 100000001 | aisha101 | 100 |
+| Omar Haddad | 100000002 | omar102 | 120 |
+| Fatima Al Ali | 100000003 | fatima103 | 100 |
+| Yousef Khan | 100000004 | yousef104 | 40 (7 available) |
+| Mariam Saeed | 100000005 | mariam105 | 150 |
+| Khalid Rashed (pending) | 100000006 | khalid106 | - |
+| Noor Hamdan (rejected) | 100000007 | noor107 | - |
+
+Suggested demonstration:
+1. Approval: as admin, approve request 6 (Khalid) and change his initial minutes.
+2. Allowance limits: log in as 100000004 (7 minutes available). A Medium job is rejected; a Small job is accepted.
+3. Waits with all GPUs busy: Dashboard, Waiting queue tab.
+4. Cancellations: cancel a queued job as a student, and a running job as the admin from Dashboard, Jobs.
+5. Completion: click Advance minute 5 times. J114 completes at 09:45 and J118 starts on GPU 3.
+6. Save and reload: log out, close the login window, then run `LoginFrame` again. The clock, jobs and balances are restored.
+
 ## Project structure
 
 - `model`: users, jobs, GPUs, requests and time allowances

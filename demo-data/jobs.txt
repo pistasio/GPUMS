@@ -1,0 +1,21 @@
+101|100000001|Image classifier|PyTorch|Train ResNet-18 on CIFAR-10|Medium|0|Completed|1|0|15|-1|||15
+102|100000002|Quick test|TensorFlow|Check the training script runs|Small|0|Completed|2|0|5|-1|||5
+103|100000003|Protein folding|AlphaFold|Predict structure of sample protein|Large|0|Completed|3|0|30|-1|||30
+104|100000004|Warm-up|CUDA|Matrix multiplication benchmark|Small|0|Completed|4|0|5|-1|||5
+105|100000005|Sentiment model|Hugging Face|Fine-tune BERT on reviews|Medium|0|Completed|2|5|20|-1|||15
+106|100000001|Data check|Python|Validate the image dataset|Small|0|Completed|4|5|10|-1|||5
+107|100000002|Speech model|Whisper|Fine-tune on Arabic audio|Large|5|Cancelled|0|-1|-1|5|100000002|Uploaded the wrong dataset|0
+108|100000004|Crypto mining test|CUDA|Hash rate experiment|Large|5|Cancelled|4|10|18|18|admin|Mining is not allowed on lab GPUs|8
+109|100000005|Tokenizer run|Hugging Face|Build the vocabulary|Small|5|Completed|1|15|20|-1|||5
+110|100000003|Drug screening|RDKit|Score candidate molecules|Medium|12|Completed|4|18|33|-1|||15
+111|100000001|Object detection|YOLOv8|Train on campus traffic images|Very large|16|Cancelled|1|20|25|25|100000001|Found a bug in the training script|5
+112|100000004|Thesis baseline|PyTorch|Baseline LSTM for sensor data|Medium|20|Completed|2|20|35|-1|||15
+113|100000005|Translation model|Fairseq|English to Arabic translation|Large|22|Running|1|25|-1|-1|||0
+114|100000002|Speech model v2|Whisper|Fine-tune with the correct dataset|Medium|24|Running|3|30|-1|-1|||0
+115|100000003|Result plots|Python|Render figures for the report|Small|24|Completed|4|33|38|-1|||5
+116|100000001|Object detection v2|YOLOv8|Retrain with the fixed script|Large|35|Running|2|35|-1|-1|||0
+117|100000005|Language model|Llama|Fine-tune a small LLM|Very large|36|Running|4|38|-1|-1|||0
+118|100000002|Evaluation|Whisper|Word error rate on the test set|Small|36|Queued|0|-1|-1|-1|||0
+119|100000003|Docking simulation|AutoDock|Dock top 50 molecules|Medium|36|Queued|0|-1|-1|-1|||0
+120|100000005|Tokenizer run|Hugging Face|Build the vocabulary|Small|36|Cancelled|0|-1|-1|37|admin|Duplicate of J109|0
+121|100000004|Thesis plots|Python|Plot the baseline results|Small|39|Queued|0|-1|-1|-1|||0
